@@ -178,36 +178,65 @@
 			}
 		}
 
-		function createDisplayItem() {
-			if (styles.getPropertyValue('display') === 'flex') {
-				const vals = ['align-items', 'justify-content', 'flex-direction'];
-				let res = `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">display:</strong>
-						<span class="SCE_item-val">flex</span>
-					</div>
-				`;
+		function createDisplayItem(val) {
+			let res = `
+				<div class="SCE_item">
+					<strong class="SCE_item-prop">display:</strong>
+					<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
+				</div>
+			`;
 
-				vals.forEach(val => {
+			if (styles.getPropertyValue(val) === 'flex' || styles.getPropertyValue(val) === 'inline-flex') {
+				const props = ['align-items', 'justify-content', 'flex-direction', 'flex-wrap'];
+
+				props.forEach(prop => {
 					res += `
 						<div class="SCE_item">
-							<strong class="SCE_item-prop">${val}:</strong>
-							<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
+							<strong class="SCE_item-prop">${prop}:</strong>
+							<span class="SCE_item-val">${styles.getPropertyValue(prop)}</span>
 						</div>
 					`;
 				});
-
-				return res;
-			} else if (styles.getPropertyValue('display') === 'grid') {
-				return '';
-			} else {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">display:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('display')}</span>
-					</div>
-				`;
 			}
+			
+			if (styles.getPropertyValue(val) === 'grid' || styles.getPropertyValue(val) === 'inline-grid') {
+				const props = ['grid-template-columns', 'grid-template-rows', 'grid-row-gap', 'grid-column-gap'];
+
+				props.forEach(prop => {
+					res += `
+						<div class="SCE_item">
+							<strong class="SCE_item-prop">${prop}:</strong>
+							<span class="SCE_item-val">${styles.getPropertyValue(prop)}</span>
+						</div>
+					`;
+				});
+			}
+
+			return res;
+		}
+
+		function createPositionItem(val) {
+			let res = `
+				<div class="SCE_item">
+					<strong class="SCE_item-prop">position:</strong>
+					<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
+				</div>
+			`;
+
+			if (styles.getPropertyValue(val) !== 'static') {
+				const props = ['top', 'bottom', 'left', 'right', 'z-index'];
+
+				props.forEach(prop => {
+					res += `
+						<div class="SCE_item">
+							<strong class="SCE_item-prop">${prop}:</strong>
+							<span class="SCE_item-val">${checkZeroPixels(styles.getPropertyValue(prop))}</span>
+						</div>
+					`;
+				});
+			}
+				
+			return res;
 		}
 
 		function createOverflowItem() {
@@ -286,11 +315,8 @@
 
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Block properties</h4>
-					${createDisplayItem()}
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">position:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('position')}</span>
-					</div>
+					${createDisplayItem('display')}
+					${createPositionItem('position')}
 					${createOverflowItem()}
 					${createFloatItem()}
 				</div>
