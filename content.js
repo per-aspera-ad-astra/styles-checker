@@ -4,6 +4,7 @@
 	const closeExtensionClass = 'SCE_header-btn-close';
 	const moveLeftButtonClass = 'SCE_header-btn-left';
 	const moveRightButtonClass = 'SCE_header-btn-right';
+	const activeButtonClass = 'SCE_header-btn-active';
 	let freeze = false;
 	let posLeft = 'inherit';
 	let posRight = '5px';
@@ -21,9 +22,9 @@
 			}
 		}
 
-		if (e.key === 'Escape') {
-			location.reload();
-		}
+		// if (e.key === 'Escape') {
+		// 	location.reload();
+		// }
 	});
 
 	function init() {
@@ -67,11 +68,11 @@
 		const header = `
 			<header class="SCE_header">
 				<div class="SCE_header-position">
-					<button class="SCE_header-btn-left" title="Move to left">⬅</button>
-					<button class="SCE_header-btn-right" title="Move to right">⬅</button>
+					<button class="${moveLeftButtonClass} ${posLeft === 'inherit' ? activeButtonClass : ''}"" title="Move to left">⬅</button>
+					<button class="${moveRightButtonClass} ${posRight === 'inherit' ? activeButtonClass : ''}" title="Move to right">⬅</button>
 				</div>
 				<h3 class="SCE_header-title">Styles Checker</h3>
-				<button class="SCE_header-btn-close"></button>
+				<button class="SCE_header-btn-close">✖</button>
 			</header>
 			<main class="SCE_main">
 				<div class="SCE_common-list">
@@ -81,7 +82,7 @@
 				</div>
 			</main>
 			<footer class="SCE_footer">
-				<span>Press ' F ' to freeze or unfreeze, ' ESC ' to close.</span>
+				<span>Press ' F ' to freeze or unfreeze</span>
 			</footer>
 		`;
 
@@ -340,16 +341,23 @@
 		closePopup(`.${closeExtensionClass}`);
 
 		popup.addEventListener('click', (e) => {
+			const btnLeft = document.querySelector(`.${moveLeftButtonClass}`);
+			const btnRight = document.querySelector(`.${moveRightButtonClass}`);
+
 			if (e.target.classList.contains(moveLeftButtonClass)) {
 				posLeft = '5px';
 				posRight = 'inherit';
 				changePopupPosition(popup, '5px', 'inherit');
+				btnLeft.classList.remove(activeButtonClass);
+				btnRight.classList.add(activeButtonClass);
 			}
 
 			if (e.target.classList.contains(moveRightButtonClass)) {
 				posLeft = 'inherit';
 				posRight = '5px';
 				changePopupPosition(popup, 'inherit', '5px');
+				btnRight.classList.remove(activeButtonClass);
+				btnLeft.classList.add(activeButtonClass);
 			}
 		});
 	}
