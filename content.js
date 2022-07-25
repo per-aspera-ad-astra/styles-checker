@@ -22,9 +22,9 @@
 			}
 		}
 
-		// if (e.key === 'Escape') {
-		// 	location.reload();
-		// }
+		if (e.key === 'Escape') {
+			location.reload();
+		}
 	});
 
 	function init() {
@@ -75,11 +75,9 @@
 				<button class="SCE_header-btn-close">✖</button>
 			</header>
 			<main class="SCE_main">
-				<div class="SCE_common-list">
 		`;
 
 		const footer = `
-				</div>
 			</main>
 			<footer class="SCE_footer">
 				<span>Press ' F ' to freeze or unfreeze</span>
@@ -95,14 +93,22 @@
 			`;
 		}
 
-		function createWrappedItem(val) {
+		function createComplexItem(val) {
 			if (val === 'text-decoration') {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">text-decoration:</strong>
-						<span class="SCE_item-val">${checkTextDecoration(styles.getPropertyValue('text-decoration'))}</span>
-					</div>
-				`;
+				if (styles.getPropertyValue(val).startsWith('none')) {
+					return '';
+				} else {
+					return `
+						<div class="SCE_item">
+							<strong class="SCE_item-prop">${val}:</strong>
+							<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue(val))}</span>
+						</div>
+					`;
+				}
+			} else if (val === 'text-transform') {
+				return styles.getPropertyValue(val).startsWith('none') ? '' : createRegularItem(val);
+			} else if (val === 'font-style' || val === 'white-space' || val === 'letter-spacing') {
+				return styles.getPropertyValue(val) === 'normal' ? '' : createRegularItem(val);
 			} else {
 				return `
 					<div class="SCE_item">
@@ -113,8 +119,19 @@
 			}
 		}
 
-		function checkTextDecoration(val) {
-			return val.startsWith('none') ? 'none' : val;
+		function createColorItem(val) {
+			function checkTransparent() {
+				return rgbToHex(styles.getPropertyValue(val)) === 'transparent' ? '' :
+					`<span class="SCE_item-color" style="background: ${styles.getPropertyValue(val)}"></span>`;
+			}
+
+			return `
+				<div class="SCE_item SCE_item--color">
+					<strong class="SCE_item-prop">${val}:</strong>
+					${checkTransparent()}
+					<span class="SCE_item-val">${rgbToHex(styles.getPropertyValue(val))}</span>
+				</div>
+			`;
 		}
 
 		function checkZeroPixels(val) {
@@ -138,11 +155,11 @@
 				let res = '';
 
 				borders.forEach(item => {
-					if (!styles.getPropertyValue('border'+ item).startsWith('0px')) {
+					if (!styles.getPropertyValue('border' + item).startsWith('0px')) {
 						res += `
 							<div class="SCE_item">
 								<strong class="SCE_item-prop">${'border' + item}:</strong>
-								<span class="SCE_item-val">${styles.getPropertyValue('border'+ item)}</span>
+								<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue('border'+ item))}</span>
 							</div>
 						`;
 					}
@@ -280,13 +297,9 @@
 				<div class="SCE_item SCE_item--tag">
 					< ${tag} >
 				</div>
-				<div class="SCE_item SCE_item--background">
-					<strong class="SCE_item-prop">background-color:</strong>
-					<span class="SCE_item-val">${rgbToHex(styles.getPropertyValue('background-color'))}</span>
-				</div>
-				<div class="SCE_item SCE_item--color">
-					<strong class="SCE_item-prop">color:</strong>
-					<span class="SCE_item-val">${rgbToHex(styles.getPropertyValue('color'))}</span>
+				<div class="SCE_group">
+					${createColorItem('background-color')}
+					${createColorItem('color')}
 				</div>
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Text & Font properties</h4>
@@ -294,15 +307,14 @@
 					${createRegularItem('font-size')}
 					${createRegularItem('line-height')}
 					${createRegularItem('font-weight')}
-					${createRegularItem('font-style')}
+					${createComplexItem('font-style')}
 					${createRegularItem('text-align')}
-					${createWrappedItem('text-decoration')}
-					${createRegularItem('text-transform')}
-					${createWrappedItem('letter-spacing')}
-					${createWrappedItem('word-spacing')}
-					${createRegularItem('white-space')}
+					${createComplexItem('text-decoration')}
+					${createComplexItem('text-transform')}
+					${createComplexItem('letter-spacing')}
+					${createComplexItem('word-spacing')}
+					${createComplexItem('white-space')}
 				</div>
-
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Sizes</h4>
 					${createRegularItem('height')}
@@ -311,9 +323,8 @@
 					${createMarginAndPaddingItem('margin')}
 					${createRegularItem('box-sizing')}
 					${createBorderItem()}
-					${createWrappedItem('border-radius')}
+					${createComplexItem('border-radius')}
 				</div>
-
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Block properties</h4>
 					${createDisplayItem('display')}
@@ -321,7 +332,6 @@
 					${createOverflowItem()}
 					${createFloatItem()}
 				</div>
-
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Other styles</h4>
 					${createRegularItem('opacity')}
@@ -402,5 +412,9 @@
 		}
 	  
 		return '#' + r + g + b;
+	}
+
+	function rgbToHexInProp(val) {
+		return val.slice(0, val.indexOf('rgb')) + rgbToHex(val.slice(val.indexOf('rgb')));	
 	}
 })();
