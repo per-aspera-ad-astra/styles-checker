@@ -9,6 +9,8 @@
 	let posLeft = 'inherit';
 	let posRight = '5px';
 
+	let currentElement = document.body;
+
 	init();
 
 	window.addEventListener('keydown', (e) => {
@@ -36,7 +38,9 @@
 	}
 
 	function checkMoving(e) {
-		let currentElement = e.target;
+		removeCurrentClass(currentElement, currentCheckingElementClass);
+		currentElement = e.target;
+
 		let currentTag;
 		// let currentClasses;
 		let styles;
@@ -54,9 +58,15 @@
 			};
 	
 			currentElement.addEventListener('mouseout', () => {
-				currentElement.classList.remove(currentCheckingElementClass);
+				if (!freeze) {
+					removeCurrentClass(currentElement, currentCheckingElementClass);
+				}
 			});
 		}
+	}
+
+	function removeCurrentClass(el, className) {
+		el.classList.remove(className);
 	}
 
 	function updatePopup(tag, styles, left, right) {
@@ -107,6 +117,8 @@
 				}
 			} else if (val === 'text-transform') {
 				return styles.getPropertyValue(val).startsWith('none') ? '' : createRegularItem(val);
+			} else if (val === 'word-spacing') {
+				return styles.getPropertyValue(val).startsWith('0') ? '' : createRegularItem(val);
 			} else if (val === 'font-style' || val === 'white-space' || val === 'letter-spacing') {
 				return styles.getPropertyValue(val) === 'normal' ? '' : createRegularItem(val);
 			} else {
@@ -142,12 +154,10 @@
 			let borderVal = styles.getPropertyValue('border');
 
 			if (borderVal) {
-				borderVal =  borderVal.startsWith('0px') ? '0' : borderVal;
-
-				return `
+				return borderVal.startsWith('0px') ? '' : `
 					<div class="SCE_item">
 						<strong class="SCE_item-prop">border:</strong>
-						<span class="SCE_item-val">${borderVal}</span>
+						<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue('border'))}</span>
 					</div>
 				`;
 			} else {
@@ -160,6 +170,35 @@
 							<div class="SCE_item">
 								<strong class="SCE_item-prop">${'border' + item}:</strong>
 								<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue('border'+ item))}</span>
+							</div>
+						`;
+					}
+				});
+
+				return res;
+			}
+		}
+
+		function createBorderRadiusItem() {
+			let borderRadiusVal = styles.getPropertyValue('border-radius');
+
+			if (borderRadiusVal) {
+				return borderRadiusVal.startsWith('0px') ? '' : `
+					<div class="SCE_item">
+						<strong class="SCE_item-prop">border-radius:</strong>
+						<span class="SCE_item-val">${styles.getPropertyValue('border-radius')}</span>
+					</div>
+				`;
+			} else {
+				const borders = ['-top-left-radius', '-top-right-radius', '-bottom-left-radius', '-bottom-right-radius'];
+				let res = '';
+
+				borders.forEach(item => {
+					if (!styles.getPropertyValue('border' + item).startsWith('0px')) {
+						res += `
+							<div class="SCE_item">
+								<strong class="SCE_item-prop">${'border' + item}:</strong>
+								<span class="SCE_item-val">${styles.getPropertyValue('border'+ item)}</span>
 							</div>
 						`;
 					}
@@ -323,7 +362,7 @@
 					${createMarginAndPaddingItem('margin')}
 					${createRegularItem('box-sizing')}
 					${createBorderItem()}
-					${createComplexItem('border-radius')}
+					${createBorderRadiusItem()}
 				</div>
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Block properties</h4>
