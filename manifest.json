@@ -1,7 +1,7 @@
 {
 	"name": "Styles Checker",
-	"description": "Check CSS on a page",
-	"version": "1.0",
+	"description": "Check CSS of any element on a page",
+	"version": "1.0.0",
 	"manifest_version": 3,
 	"permissions": ["activeTab", "scripting"],
 	"background": {
