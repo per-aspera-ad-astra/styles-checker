@@ -89,6 +89,7 @@
 	color: #fff !important;
 	cursor: pointer !important;
 	display: flex !important;
+	font-size: 18px !important;
 	justify-content: center !important;
 	padding: 0 !important;
 	position: absolute !important;
@@ -115,8 +116,8 @@
 }
 
 .SCE_main::-webkit-scrollbar-thumb {
-    background: rgb(42, 43, 84) !important;
-    -webkit-border-radius: 1ex !important;
+	background: rgb(42, 43, 84) !important;
+	-webkit-border-radius: 1ex !important;
 }
 
 .SCE_group {
