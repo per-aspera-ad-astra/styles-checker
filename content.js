@@ -8,7 +8,6 @@
 	let freeze = false;
 	let posLeft = 'inherit';
 	let posRight = '5px';
-
 	let currentElement = document.body;
 
 	init();
@@ -42,7 +41,6 @@
 		currentElement = e.target;
 
 		let currentTag;
-		// let currentClasses;
 		let styles;
 
 		if (currentElement.closest(`.${stylesCheckerExtensionClass}`)) {
@@ -53,7 +51,6 @@
 	
 				styles = window.getComputedStyle(currentElement);
 				currentTag = currentElement.tagName.toLowerCase();
-				// currentClasses = currentElement.className;
 				updatePopup(currentTag, styles, posLeft, posRight);
 			};
 	
@@ -63,10 +60,6 @@
 				}
 			});
 		}
-	}
-
-	function removeCurrentClass(el, className) {
-		el.classList.remove(className);
 	}
 
 	function updatePopup(tag, styles, left, right) {
@@ -94,11 +87,22 @@
 			</footer>
 		`;
 
-		function createRegularItem(val) {
+		function getProp(val) {
+			return styles.getPropertyValue(val);
+		}
+
+		function createRegularItem(
+			val,
+			extraFunction = null,
+			extraClass = '',
+			extraHTML = null
+		){
+			const populateProp = extraFunction ? extraFunction(getProp(val)) : getProp(val);
 			return `
-				<div class="SCE_item">
+				<div class="SCE_item SCE_item--${extraClass}">
 					<strong class="SCE_item-prop">${val}:</strong>
-					<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
+					${extraHTML || ''}
+					<span class="SCE_item-val">${populateProp}</span>
 				</div>
 			`;
 		}
@@ -108,12 +112,7 @@
 				if (styles.getPropertyValue(val).startsWith('none')) {
 					return '';
 				} else {
-					return `
-						<div class="SCE_item">
-							<strong class="SCE_item-prop">${val}:</strong>
-							<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue(val))}</span>
-						</div>
-					`;
+					return createRegularItem(val, rgbToHexInProp);
 				}
 			} else if (val === 'text-transform') {
 				return styles.getPropertyValue(val).startsWith('none') ? '' : createRegularItem(val);
@@ -122,12 +121,7 @@
 			} else if (val === 'font-style' || val === 'white-space' || val === 'letter-spacing') {
 				return styles.getPropertyValue(val) === 'normal' ? '' : createRegularItem(val);
 			} else {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">${val}:</strong>
-						<span class="SCE_item-val">${checkZeroPixels(styles.getPropertyValue(val))}</span>
-					</div>
-				`;
+				return createRegularItem(val, checkZeroPixels);
 			}
 		}
 
@@ -137,41 +131,21 @@
 					`<span class="SCE_item-color" style="background: ${styles.getPropertyValue(val)}"></span>`;
 			}
 
-			return `
-				<div class="SCE_item SCE_item--color">
-					<strong class="SCE_item-prop">${val}:</strong>
-					${checkTransparent()}
-					<span class="SCE_item-val">${rgbToHex(styles.getPropertyValue(val))}</span>
-				</div>
-			`;
-		}
-
-		function checkZeroPixels(val) {
-			return val === '0px' ? '0' : val;
+			return createRegularItem(val, rgbToHex, 'color', checkTransparent());
 		}
 
 		function createBorderItem() {
 			let borderVal = styles.getPropertyValue('border');
 
 			if (borderVal) {
-				return borderVal.startsWith('0px') ? '' : `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">border:</strong>
-						<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue('border'))}</span>
-					</div>
-				`;
+				return borderVal.startsWith('0px') ? '' : createRegularItem('border', rgbToHexInProp);
 			} else {
 				const borders = ['-top', '-bottom', '-left', '-right'];
 				let res = '';
 
 				borders.forEach(item => {
 					if (!styles.getPropertyValue('border' + item).startsWith('0px')) {
-						res += `
-							<div class="SCE_item">
-								<strong class="SCE_item-prop">${'border' + item}:</strong>
-								<span class="SCE_item-val">${rgbToHexInProp(styles.getPropertyValue('border'+ item))}</span>
-							</div>
-						`;
+						res += createRegularItem('border' + item, rgbToHexInProp);
 					}
 				});
 
@@ -183,24 +157,14 @@
 			let borderRadiusVal = styles.getPropertyValue('border-radius');
 
 			if (borderRadiusVal) {
-				return borderRadiusVal.startsWith('0px') ? '' : `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">border-radius:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('border-radius')}</span>
-					</div>
-				`;
+				return borderRadiusVal.startsWith('0px') ? '' : createRegularItem('border-radius');
 			} else {
 				const borders = ['-top-left-radius', '-top-right-radius', '-bottom-left-radius', '-bottom-right-radius'];
 				let res = '';
 
 				borders.forEach(item => {
 					if (!styles.getPropertyValue('border' + item).startsWith('0px')) {
-						res += `
-							<div class="SCE_item">
-								<strong class="SCE_item-prop">${'border' + item}:</strong>
-								<span class="SCE_item-val">${styles.getPropertyValue('border'+ item)}</span>
-							</div>
-						`;
+						res += createRegularItem('border' + item);
 					}
 				});
 
@@ -215,81 +179,49 @@
 
 				places.forEach(place => {
 					if (styles.getPropertyValue(val + place) !== '0px') {
-						res += `
-							<div class="SCE_item">
-								<strong class="SCE_item-prop">${val + place}:</strong>
-								<span class="SCE_item-val">${styles.getPropertyValue(val + place)}</span>
-							</div>
-						`
+						res += createRegularItem(val + place);
 					}
 				});
 
 				return res;
 			} else {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">${val}:</strong>
-						<span class="SCE_item-val">${checkZeroPixels(styles.getPropertyValue(val))}</span>
-					</div>
-				`;
+				return createRegularItem(val, checkZeroPixels);
 			}
 		}
 
-		function createDisplayItem(val) {
-			let res = `
-				<div class="SCE_item">
-					<strong class="SCE_item-prop">display:</strong>
-					<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
-				</div>
-			`;
+		function createDisplayItem() {
+			const val = 'display';
+			let res = createRegularItem(val);
 
-			if (styles.getPropertyValue(val) === 'flex' || styles.getPropertyValue(val) === 'inline-flex') {
+			if (getProp(val) === 'flex' || getProp(val) === 'inline-flex') {
 				const props = ['align-items', 'justify-content', 'flex-direction', 'flex-wrap'];
 
 				props.forEach(prop => {
-					res += `
-						<div class="SCE_item">
-							<strong class="SCE_item-prop">${prop}:</strong>
-							<span class="SCE_item-val">${styles.getPropertyValue(prop)}</span>
-						</div>
-					`;
+					res += createRegularItem(prop);
 				});
 			}
 			
-			if (styles.getPropertyValue(val) === 'grid' || styles.getPropertyValue(val) === 'inline-grid') {
+			if (getProp(val) === 'grid' || getProp(val) === 'inline-grid') {
 				const props = ['grid-template-columns', 'grid-template-rows', 'grid-row-gap', 'grid-column-gap'];
 
 				props.forEach(prop => {
-					res += `
-						<div class="SCE_item">
-							<strong class="SCE_item-prop">${prop}:</strong>
-							<span class="SCE_item-val">${styles.getPropertyValue(prop)}</span>
-						</div>
-					`;
+					res += createRegularItem(prop);
 				});
 			}
 
 			return res;
 		}
 
-		function createPositionItem(val) {
-			let res = `
-				<div class="SCE_item">
-					<strong class="SCE_item-prop">position:</strong>
-					<span class="SCE_item-val">${styles.getPropertyValue(val)}</span>
-				</div>
-			`;
+		function createPositionItem() {
+			const val = 'position';
 
-			if (styles.getPropertyValue(val) !== 'static') {
+			let res = createRegularItem(val);
+
+			if (getProp(val) !== 'static') {
 				const props = ['top', 'bottom', 'left', 'right', 'z-index'];
 
 				props.forEach(prop => {
-					res += `
-						<div class="SCE_item">
-							<strong class="SCE_item-prop">${prop}:</strong>
-							<span class="SCE_item-val">${checkZeroPixels(styles.getPropertyValue(prop))}</span>
-						</div>
-					`;
+					res += createRegularItem(prop, checkZeroPixels);
 				});
 			}
 				
@@ -297,37 +229,21 @@
 		}
 
 		function createOverflowItem() {
-			if (styles.getPropertyValue('overflow').split(' ').length > 1) {
+			if (getProp('overflow').split(' ').length > 1) {
 				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">overflow-x:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('overflow-x')}</span>
-					</div>
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">overflow-y:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('overflow-y')}</span>
-					</div>
+					${createRegularItem('overflow-x')}
+					${createRegularItem('overflow-y')}
 				`;
 			} else {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">overflow:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('overflow')}</span>
-					</div>
-				`;
+				return createRegularItem('overflow');
 			}
 		}
 
 		function createFloatItem() {
-			if (styles.getPropertyValue('float') === 'none') {
+			if (getProp('float') === 'none') {
 				return '';
 			} else {
-				return `
-					<div class="SCE_item">
-						<strong class="SCE_item-prop">float:</strong>
-						<span class="SCE_item-val">${styles.getPropertyValue('float')}</span>
-					</div>
-				`;
+				return createRegularItem('float');
 			}
 		}
 
@@ -366,8 +282,8 @@
 				</div>
 				<div class="SCE_group">
 					<h4 class="SCE_group-title">Block properties</h4>
-					${createDisplayItem('display')}
-					${createPositionItem('position')}
+					${createDisplayItem()}
+					${createPositionItem()}
 					${createOverflowItem()}
 					${createFloatItem()}
 				</div>
@@ -421,6 +337,14 @@
 	function changePopupPosition(el, left, right) {
 		el.style.left = left;
 		el.style.right = right;
+	}
+
+	function removeCurrentClass(el, className) {
+		el.classList.remove(className);
+	}
+
+	function checkZeroPixels(val) {
+		return val === '0px' ? '0' : val;
 	}
 
 	function rgbToHex(rgb) {
